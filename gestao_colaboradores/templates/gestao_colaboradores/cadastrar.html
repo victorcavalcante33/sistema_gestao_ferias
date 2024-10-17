@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Colaborador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 15px;
+        }
+        h1 {
+            color: #007bff;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        @media (min-width: 768px) {
+            form {
+                flex-direction: column;
+                align-items: center;
+            }
+            .form-group {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastrar Novo Colaborador</h1>
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Formulário de Cadastro</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" class="text-center">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="id_nome">Nome:</label>
+                        {{ form.nome }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_graduacao">Graduação:</label>
+                        {{ form.graduacao }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_numero_re">Número de RE:</label>
+                        <input type="text" id="id_numero_re" name="numero_re" class="form-control" maxlength="6" pattern="\d{1,6}" title="Máximo 6 dígitos" value="{{ form.numero_re.value|default_if_none:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_data_promocao">Data da Última Promoção:</label>
+                        <input type="date" id="id_data_promocao" name="data_promocao" class="form-control" value="{{ form.data_promocao.value|date:'Y-m-d' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_mes1_preferencia">Primeira preferência de mês:</label>
+                        {{ form.mes1_preferencia }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_mes2_preferencia">Segunda preferência de mês:</label>
+                        {{ form.mes2_preferencia }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_mes3_preferencia">Terceira preferência de mês:</label>
+                        {{ form.mes3_preferencia }}
+                    </div>
+                    <div class="form-group mt-3">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        <a href="{% url 'lista_colaboradores' %}" class="btn btn-secondary">Voltar para Lista</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

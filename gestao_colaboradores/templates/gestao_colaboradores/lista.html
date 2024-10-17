@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Colaboradores</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 30px;
+        }
+        h1 {
+            color: #007bff;
+            margin-bottom: 30px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Colaboradores</h1>
+        
+        <!-- Botão para abrir o modal de filtro -->
+        <div class="text-center">
+            <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#filterModal">
+                Filtrar
+            </button>
+        </div>
+
+<!-- Modal do Filtro -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">Filtrar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="GET">
+                    <!-- Campo de Graduação -->
+                    <div class="mb-3">
+                        <label for="id_graduacao" class="form-label">Graduação</label>
+                        <select class="form-select" id="id_graduacao" name="graduacao">
+                            <option value="">Selecione a graduação</option>
+                            <option value="Capitão">Capitão</option>
+                            <option value="Tenente">Tenente</option>
+                            <option value="Subtenente">Subtenente</option>
+                            <option value="1º Sargento">1º Sargento</option>
+                            <option value="2º Sargento">2º Sargento</option>
+                            <option value="3º Sargento">3º Sargento</option>
+                            <option value="Cabo">Cabo</option>
+                            <option value="Soldado">Soldado</option>
+                        </select>
+                    </div>
+
+                    <!-- Campo de Data de Promoção com Datepicker -->
+                    <div class="mb-3">
+                        <label for="id_data_promocao" class="form-label">Data da Última Promoção</label>
+                        <input type="text" class="form-control datepicker" id="id_data_promocao" name="data_promocao" placeholder="Selecionar Data" autocomplete="off">
+                    </div>
+
+                    <!-- Campo para Mês de Férias Alocado -->
+                    <div class="mb-3">
+                        <label for="id_mes_alocado" class="form-label">Mês de Férias Alocado</label>
+                        <select class="form-select" id="id_mes_alocado" name="mes_alocado">
+                            <option value="">Selecione o mês</option>
+                            <option value="Janeiro">Janeiro</option>
+                            <option value="Fevereiro">Fevereiro</option>
+                            <option value="Março">Março</option>
+                            <option value="Abril">Abril</option>
+                            <option value="Maio">Maio</option>
+                            <option value="Junho">Junho</option>
+                            <option value="Julho">Julho</option>
+                            <option value="Agosto">Agosto</option>
+                            <option value="Setembro">Setembro</option>
+                            <option value="Outubro">Outubro</option>
+                            <option value="Novembro">Novembro</option>
+                            <option value="Dezembro">Dezembro</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+        <!-- Lista de colaboradores filtrados -->
+        {% if colaboradores %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"></h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                    {% for colaborador in colaboradores %}
+                        <li class="list-group-item">
+                            <strong>{{ colaborador.nome }}</strong> - {{ colaborador.graduacao }}<br>
+                            Número de RE: {{ colaborador.numero_re }}<br>
+                            Data da Última Promoção: {{ colaborador.data_promocao|date:"d/m/Y" }}<br>
+                            Mês de Férias Alocado: {{ colaborador.mes_alocado }}
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                Não há colaboradores cadastrados no momento.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Incluindo scripts do Bootstrap e Datepicker -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker/dist/locales/bootstrap-datepicker.pt-BR.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            $('.datepicker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                todayHighlight: true,
+                language: 'pt-BR'
+            });
+
+            // Adiciona um evento de submit ao formulário
+            $('form').on('submit', function() {
+                // Obtém a data selecionada
+                var selectedDate = $('#id_data_promocao').val();
+                
+                // Verifica se uma data foi selecionada
+                if (selectedDate) {
+                    // Converte a data para o formato esperado pelo backend (se necessário)
+                    var formattedDate = selectedDate;  // Já está no formato correto (yyyy-mm-dd)
+                    
+                    // Atualiza o valor do campo de input
+                    $('#id_data_promocao').val(formattedDate);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
