@@ -4,6 +4,10 @@ from django.shortcuts import render, redirect
 from .models import Colaborador
 from .forms import ColaboradorForm
 from .filters import ColaboradorFilter
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from django.http import HttpResponse
+import csv
 
 # Definir as prioridades de graduação
 PRIORIDADE_GRADUACOES = {
@@ -92,3 +96,78 @@ def cadastrar_colaborador(request):
     else:
         form = ColaboradorForm()
     return render(request, 'gestao_colaboradores/cadastrar.html', {'form': form})
+
+
+def pagina_inicial(request):
+    return render(request, 'gestao_colaboradores/pagina_inicial.html')
+
+# Função para gerar PDF
+def exportar_pdf(request):
+    # Obtenha os colaboradores filtrados
+    colaboradores_filtrados = ColaboradorFilter(request.GET, queryset=Colaborador.objects.all()).qs
+
+    # Alocar as férias para cada colaborador filtrado
+    ferias_alocadas = alocar_ferias(colaboradores_filtrados)
+
+    # Aplicar o filtro ao mês efetivamente alocado
+    mes_filtrado = request.GET.get('mes_alocado', None)
+    if mes_filtrado:
+        colaboradores_filtrados = [colab for colab in colaboradores_filtrados if ferias_alocadas.get(colab.nome) == mes_filtrado]
+
+    # Configurar o response para PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="colaboradores.pdf"'
+
+    # Criar o PDF
+    p = canvas.Canvas(response, pagesize=A4)
+    largura, altura = A4
+
+    # Definir um título
+    p.drawString(100, altura - 100, "Lista de Colaboradores Filtrados")
+
+    # Adicionar colaboradores filtrados ao PDF
+    y = altura - 120
+    for colaborador in colaboradores_filtrados:
+        p.drawString(100, y, f"Nome: {colaborador.nome}")
+        y -= 20
+        p.drawString(100, y, f"Graduação: {colaborador.graduacao}")
+        y -= 20
+        p.drawString(100, y, f"Número de RE: {colaborador.numero_re}")
+        y -= 20
+        p.drawString(100, y, f"Data da Última Promoção: {colaborador.data_promocao}")
+        y -= 20
+        p.drawString(100, y, f"Mês Alocado: {ferias_alocadas.get(colaborador.nome, 'Não alocado')}")
+        y -= 30  # Espaço extra entre colaboradores
+
+    p.showPage()
+    p.save()
+    return response
+
+# Função para exportar CSV
+def exportar_csv(request):
+    # Obtenha os colaboradores filtrados
+    colaboradores_filtrados = ColaboradorFilter(request.GET, queryset=Colaborador.objects.all()).qs
+
+    # Configurar o response para CSV
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="colaboradores.csv"'
+
+    writer = csv.writer(response, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(['Nome', 'Graduacao', 'Numero de RE', 'Data da Ultima Promocao'])
+
+    # Função para remover caracteres especiais
+    def remover_caracteres_especiais(texto):
+        return ''.join(e for e in texto if e.isalnum() or e.isspace() or e == '-')
+
+    # Escreva os dados dos colaboradores filtrados
+    for colaborador in colaboradores_filtrados:
+        nome = remover_caracteres_especiais(colaborador.nome)
+        graduacao = remover_caracteres_especiais(colaborador.graduacao)
+        numero_re = remover_caracteres_especiais(str(colaborador.numero_re))
+        data_promocao = colaborador.data_promocao.strftime('%d/%m/%Y') if colaborador.data_promocao else ''
+        
+        writer.writerow([nome, graduacao, numero_re, data_promocao])
+
+    return response
+
+

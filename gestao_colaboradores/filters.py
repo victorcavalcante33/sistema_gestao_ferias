@@ -12,7 +12,7 @@ class ColaboradorFilter(django_filters.FilterSet):
         ('2º Sargento', '2º Sargento'),
         ('3º Sargento', '3º Sargento'),
         ('Cabo', 'Cabo'),
-        ('Soldado', 'Soldado')
+        ('Soldado', 'Soldado'),
     ], label='Graduação')
 
     numero_re = django_filters.NumberFilter(label='Número de RE')
