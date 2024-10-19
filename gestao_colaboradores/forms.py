@@ -26,3 +26,15 @@ class ColaboradorForm(forms.ModelForm):
         if data_promocao and data_promocao > datetime.date.today():
             raise forms.ValidationError('A data de promoção não pode ser no futuro.')
         return data_promocao
+
+# gestao_colaboradores/forms.py
+
+from .models import Configuracao
+
+class ConfiguracaoForm(forms.ModelForm):
+    class Meta:
+        model = Configuracao
+        fields = ['limite_por_mes']
+        labels = {
+            'limite_por_mes': 'Limite de Policiais por Mês',
+        }

@@ -1,8 +1,8 @@
 # gestao_colaboradores/views.py
 from collections import defaultdict
 from django.shortcuts import render, redirect
-from .models import Colaborador
-from .forms import ColaboradorForm
+from .models import Colaborador, Configuracao
+from .forms import ColaboradorForm, ConfiguracaoForm
 from .filters import ColaboradorFilter
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -30,12 +30,15 @@ MESES = [
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ]
 
-def alocar_ferias(colaboradores):
-    total_colaboradores = 130  # Definimos o total de colaboradores como 130
-    limite_por_mes = min(13, max(1, int(total_colaboradores * 0.10)))  # Garante pelo menos 1 e no máximo 13
+def alocar_ferias(colaboradores, limite_por_mes):
+    # Resetar o mês alocado para todos os colaboradores filtrados
+    for colaborador in colaboradores:
+        colaborador.mes_alocado = None
+        colaborador.save()
+
     meses_ferias = defaultdict(list)
     colaboradores_alocados = {}
-    meses_limite_atingido = set()  # Conjunto para armazenar meses que atingiram o limite
+    meses_limite_atingido = set()
 
     # Inicializar os meses no dicionário
     for mes in MESES:
@@ -45,7 +48,7 @@ def alocar_ferias(colaboradores):
     colaboradores_ordenados = sorted(
         colaboradores,
         key=lambda c: (
-            PRIORIDADE_GRADUACOES[c.graduacao],
+            PRIORIDADE_GRADUACOES.get(c.graduacao, 999),
             c.data_promocao if c.data_promocao else date.min,
             c.numero_re
         )
@@ -57,88 +60,87 @@ def alocar_ferias(colaboradores):
         for mes in [colaborador.mes1_preferencia, colaborador.mes2_preferencia, colaborador.mes3_preferencia]:
             if len(meses_ferias[mes]) < limite_por_mes:
                 meses_ferias[mes].append(colaborador)
-                colaboradores_alocados[colaborador] = mes  # Armazena o mês alocado
-                # Salvar o mês alocado no banco de dados
+                colaboradores_alocados[colaborador] = mes
                 colaborador.mes_alocado = mes
                 colaborador.save()
                 alocado = True
-                # Verificar se o mês atingiu o limite após a alocação
                 if len(meses_ferias[mes]) == limite_por_mes:
                     meses_limite_atingido.add(mes)
                 break
 
-        # Se não foi possível alocar nas preferências, alocar no mês com menos pessoas
         if not alocado:
-            # Encontra os meses com disponibilidade
             meses_disponiveis = [mes for mes in MESES if len(meses_ferias[mes]) < limite_por_mes]
             if meses_disponiveis:
                 mes_menos_lotado = min(meses_disponiveis, key=lambda mes: len(meses_ferias[mes]))
                 meses_ferias[mes_menos_lotado].append(colaborador)
                 colaboradores_alocados[colaborador] = mes_menos_lotado
-                # Salvar o mês alocado no banco de dados
                 colaborador.mes_alocado = mes_menos_lotado
                 colaborador.save()
-                # Verificar se o mês atingiu o limite após a alocação
                 if len(meses_ferias[mes_menos_lotado]) == limite_por_mes:
                     meses_limite_atingido.add(mes_menos_lotado)
             else:
-                # Se todos os meses estão cheios, não é possível alocar
                 colaboradores_alocados[colaborador] = None
 
     return colaboradores_alocados, meses_limite_atingido
 
 # Função para listar os colaboradores com filtro e ordenação
 def lista_colaboradores(request):
-    # Criar o filtro de graduação, número de RE, data de promoção e mês alocado
+    # Carregar ou criar a configuração
+    configuracao, _ = Configuracao.objects.get_or_create(id=1)
+    
+    # Processar o formulário de configuração
+    if request.method == 'POST' and 'salvar_configuracao' in request.POST:
+        configuracao_form = ConfiguracaoForm(request.POST, instance=configuracao)
+        if configuracao_form.is_valid():
+            configuracao_form.save()
+            return redirect('lista_colaboradores')  # Redireciona para recalcular as alocações
+    else:
+        configuracao_form = ConfiguracaoForm(instance=configuracao)
+    
+    # Criar o filtro de colaboradores
     colaborador_filter = ColaboradorFilter(request.GET, queryset=Colaborador.objects.all())
-
-    # Aplicar o filtro primeiro
     colaboradores_filtrados = colaborador_filter.qs
 
-    # Alocar as férias para cada colaborador filtrado e obter os meses que atingiram o limite
-    ferias_alocadas, meses_limite_atingido = alocar_ferias(colaboradores_filtrados)
+    # Alocar as férias usando o limite definido
+    ferias_alocadas, meses_limite_atingido = alocar_ferias(colaboradores_filtrados, configuracao.limite_por_mes)
 
     # Associar o mês alocado a cada colaborador filtrado
     for colaborador in colaboradores_filtrados:
         colaborador.mes_alocado = ferias_alocadas.get(colaborador)
-
+    
     # Aplicar o filtro ao mês efetivamente alocado
     mes_filtrado = request.GET.get('mes_alocado', None)
     if mes_filtrado:
         colaboradores_filtrados = [colab for colab in colaboradores_filtrados if colab.mes_alocado == mes_filtrado]
-
+    
     # Ordenar os colaboradores filtrados de acordo com as regras de prioridade
     colaboradores_ordenados = sorted(
         colaboradores_filtrados,
         key=lambda c: (
-            PRIORIDADE_GRADUACOES[c.graduacao],
+            PRIORIDADE_GRADUACOES.get(c.graduacao, 999),
             c.data_promocao if c.data_promocao else date.min,
             c.numero_re
         )
     )
-
+    
     # Calcular a quantidade de colaboradores alocados em cada mês
     counts_per_month_qs = Colaborador.objects.exclude(mes_alocado__isnull=True).values('mes_alocado').annotate(total=Count('mes_alocado'))
-
-    # Inicializar o dicionário com todos os meses zerados
     counts_per_month = {mes: 0 for mes in MESES}
-
-    # Atualizar o dicionário com as contagens reais
     for item in counts_per_month_qs:
         mes = item['mes_alocado']
         total = item['total']
         counts_per_month[mes] = total
-
-    # Criar uma lista de tuplas para facilitar a iteração no template
     counts_per_month_list = [(mes, counts_per_month[mes]) for mes in MESES]
-
-    # Renderizar o template com os colaboradores filtrados e ordenados
+    
+    # Renderizar o template
     return render(request, 'gestao_colaboradores/lista.html', {
         'colaboradores': colaboradores_ordenados,
         'filter': colaborador_filter,
         'MESES': MESES,
         'meses_limite_atingido': meses_limite_atingido,
         'counts_per_month_list': counts_per_month_list,
+        'configuracao_form': configuracao_form,  # Passando o formulário para o template
+        'configuracao': configuracao,
     })
 
 
@@ -217,10 +219,14 @@ def exportar_pdf(request):
 # Função para exportar CSV
 def exportar_csv(request):
     # Obtenha os colaboradores filtrados
-    colaboradores_filtrados = ColaboradorFilter(request.GET, queryset=Colaborador.objects.all()).qs
+    colaborador_filter = ColaboradorFilter(request.GET, queryset=Colaborador.objects.all())
+    colaboradores_filtrados = colaborador_filter.qs
 
-    # Alocar as férias para cada colaborador filtrado
-    ferias_alocadas, meses_limite_atingido = alocar_ferias(colaboradores_filtrados)
+    # Carregar a configuração atual
+    configuracao, _ = Configuracao.objects.get_or_create(id=1)
+
+    # Alocar as férias usando o limite definido
+    ferias_alocadas, meses_limite_atingido = alocar_ferias(colaboradores_filtrados, configuracao.limite_por_mes)
 
     # Associar o mês alocado
     for colaborador in colaboradores_filtrados:

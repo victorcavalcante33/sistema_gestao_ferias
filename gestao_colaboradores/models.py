@@ -39,3 +39,9 @@ class Colaborador(models.Model):
     
     def __str__(self):
         return f"{self.nome} - {self.graduacao}"
+
+class Configuracao(models.Model):
+    limite_por_mes = models.PositiveIntegerField(default=13)
+
+    def __str__(self):
+        return f"Configurações do Sistema"
