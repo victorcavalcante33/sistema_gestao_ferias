@@ -9,39 +9,44 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+
 import os
+import sys
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+if getattr(sys, 'frozen', False):
+    # Executando como executável PyInstaller
+    ROOT_DIR = Path(sys.executable).parent
+    BASE_DIR = Path(sys._MEIPASS)
+    DEBUG = True  # Ou False, se preferir em produção
+else:
+    # Executando normalmente
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    ROOT_DIR = BASE_DIR
+    DEBUG = True  # Mantenha True durante o desenvolvimento
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-zy+9gjrae4kz*zg15n#utb-jtgtlc3%&s-!pp-l3a@+(3crrd("
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-
 
 # Application definition
 
 INSTALLED_APPS = [
+    # Apps padrão do Django
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Seus apps
     'gestao_colaboradores',
     'django_filters',
 ]
 
 MIDDLEWARE = [
+    # Middleware padrão do Django
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -56,10 +61,11 @@ ROOT_URLCONF = "gestao_ferias.urls"
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'gestao_colaboradores/templates'],  # Certifique-se de que o caminho para os templates está correto
+        'DIRS': [ROOT_DIR / 'gestao_colaboradores' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                # Context processors padrão
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -69,9 +75,7 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = "gestao_ferias.wsgi.application"
-
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -79,15 +83,15 @@ WSGI_APPLICATION = "gestao_ferias.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": os.path.join(ROOT_DIR, 'db.sqlite3'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
+    # Validadores padrão do Django
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
@@ -102,33 +106,32 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
 LANGUAGE_CODE = "pt-br"
 
-TIME_ZONE = "Brazil/East"
+TIME_ZONE = "America/Sao_Paulo"
 
 USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'gestao_colaboradores', 'static'),  # Corrigido com barras normais
-]
+STATIC_URL = '/static/'
+STATIC_ROOT = ROOT_DIR / 'staticfiles'
+
+if not DEBUG:
+    # Quando em produção ou empacotado
+    STATICFILES_DIRS = [BASE_DIR / 'gestao_colaboradores' / 'static']
+else:
+    # Durante o desenvolvimento
+    STATICFILES_DIRS = [BASE_DIR / 'gestao_colaboradores' / 'static']
 
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-
-DJANGO_SETTINGS_MODULE="gestao_ferias.settings"

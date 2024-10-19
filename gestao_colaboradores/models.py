@@ -30,12 +30,12 @@ class Colaborador(models.Model):
 
     nome = models.CharField(max_length=255)
     graduacao = models.CharField(max_length=20, choices=GRADUACOES)
-    numero_re = models.CharField(max_length=6, unique=True)
+    numero_re = models.IntegerField(unique=True)
     data_promocao = models.DateField(null=True, blank=True)
-
     mes1_preferencia = models.CharField(max_length=20, choices=MESES)
     mes2_preferencia = models.CharField(max_length=20, choices=MESES)
     mes3_preferencia = models.CharField(max_length=20, choices=MESES)
-
+    mes_alocado = models.CharField(max_length=20, choices=MESES, null=True, blank=True)
+    
     def __str__(self):
         return f"{self.nome} - {self.graduacao}"

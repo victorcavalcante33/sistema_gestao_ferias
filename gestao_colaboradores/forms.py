@@ -1,7 +1,7 @@
 # gestao_colaboradores/forms.py
 from django import forms
 from .models import Colaborador
-
+import datetime
 
 class ColaboradorForm(forms.ModelForm):
     class Meta:
@@ -15,6 +15,14 @@ class ColaboradorForm(forms.ModelForm):
 
     def clean_numero_re(self):
         numero_re = self.cleaned_data.get('numero_re')
-        if Colaborador.objects.filter(numero_re=numero_re).exists():
-            raise forms.ValidationError("Um colaborador com este número de RE já foi cadastrado.")
+        if numero_re <= 0:
+            raise forms.ValidationError('O número de RE deve ser um número positivo.')
+        if len(str(numero_re)) != 6:
+            raise forms.ValidationError('O número de RE deve ter exatamente 6 dígitos.')
         return numero_re
+    
+    def clean_data_promocao(self):
+        data_promocao = self.cleaned_data.get('data_promocao')
+        if data_promocao and data_promocao > datetime.date.today():
+            raise forms.ValidationError('A data de promoção não pode ser no futuro.')
+        return data_promocao
