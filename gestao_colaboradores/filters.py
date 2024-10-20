@@ -15,7 +15,10 @@ class ColaboradorFilter(django_filters.FilterSet):
     mes_alocado = django_filters.ChoiceFilter(
         choices=Colaborador.MESES, label='Mês de Férias Alocado'
     )
+    tipo_ferias = django_filters.ChoiceFilter(
+        choices=Colaborador.TIPO_FERIAS_CHOICES, label='Tipo de Férias'
+    )
 
     class Meta:
         model = Colaborador
-        fields = ['graduacao', 'numero_re', 'data_promocao', 'mes_alocado']
+        fields = ['graduacao', 'numero_re', 'data_promocao', 'mes_alocado', 'tipo_ferias']

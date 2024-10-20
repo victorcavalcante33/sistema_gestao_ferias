@@ -68,7 +68,7 @@
  [],
  False,
  False,
- 1729378225,
+ 1729445504,
  [('run.exe',
    'D:\\WORK\\SISTEMA_FERIAS_PM\\gestao_ferias\\.venv\\Lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit-intel\\run.exe',
    'EXECUTABLE')],

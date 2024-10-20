@@ -13,10 +13,13 @@
             font-family: 'Roboto', sans-serif;
             background-color: #f8f9fa;
             color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
         .container {
             max-width: 800px;
-            margin-top: 30px;
             padding: 15px;
         }
         h1 {
@@ -63,7 +66,8 @@
         <div class="logo-container mx-auto">
             <img src="{% static 'gestao_colaboradores\logo_policiamilitar.png' %}" alt="Logo Polícia Militar" class="logo">
         </div>
-        <h1>Efetivos</h1>
+        <h1>Efetivo</h1>
+
 
         <!-- Contador de Colaboradores -->
         <div class="text-center mt-4">
@@ -76,7 +80,7 @@
     <button type="button" class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#filterModal">
         Filtrar
     </button>
-    <a href="{% url 'cadastrar_colaborador' %}" class="btn btn-primary me-3">Cadastrar Colaborador</a>
+    <a href="{% url 'cadastrar_colaborador' %}" class="btn btn-primary me-3">Cadastrar</a>
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#countsModal">
         Ver Alocações
     </button>
@@ -98,6 +102,9 @@
                             {{ configuracao_form.limite_por_mes.label_tag }}
                             {{ configuracao_form.limite_por_mes }}
                         </div>
+                                        <!-- Adicionando o formulário para selecionar as férias -->
+                    
+
                         <ul class="list-group">
                             {% for mes, total in counts_per_month_list %}
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -183,41 +190,38 @@
             </div>
             <div class="modal-body">
                 <form method="GET" class="row g-3">
-                    <!-- Campo de Graduação -->
-                    <div class="col-md-6">
-                        {{ filter.form.graduacao.label_tag }}
-                        {{ filter.form.graduacao }}
-                    </div>
-
-                    <!-- Campo para Mês de Férias Alocado -->
-                    <div class="col-md-6">
-                        {{ filter.form.mes_alocado.label_tag }}
+                    <div class="col-md-3">
+                        Mês de Férias
                         {{ filter.form.mes_alocado }}
                     </div>
 
-                    <!-- Número de RE -->
+                    <div class="col-md-3">
+                        {{ filter.form.graduacao.label_tag }}
+                        {{ filter.form.graduacao }}
+                    </div>
+                    <div class="col-md-2">
+                        Ferias
+                        {{ filter.form.tipo_ferias }}
+                    </div>
+
                     <div class="col-md-6">
                         {{ filter.form.numero_re.label_tag }}
                         {{ filter.form.numero_re }}
                     </div>
-
-                    <!-- Campo de Data de Promoção com Datepicker -->
                     <div class="col-md-6">
                         {{ filter.form.data_promocao.label_tag }}
-                        <input type="text" name="data_promocao" id="id_data_promocao" class="form-control datepicker" data-provide="datepicker" data-date-format="yyyy-mm-dd" data-date-language="pt-BR">
+                        <input type="text" class="form-control datepicker" id="{{ filter.form.data_promocao.id_for_label }}" name="{{ filter.form.data_promocao.html_name }}" value="{{ filter.form.data_promocao.value|default_if_none:'' }}" data-provide="datepicker" data-date-format="dd/mm/yyyy">
                     </div>
 
-                    <!-- Botões de Submissão e Limpar -->
-                    <div class="col-12 d-flex justify-content-between mt-4">
-                        <button type="submit" class="btn btn-primary">Aplicar</button>
-                        <button type="button" class="btn btn-secondary" id="limparFiltro">Limpar Filtro</button>
+                    <div class="col-12 d-flex justify-content-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg me-2">Aplicar</button>
+                        <button type="button" class="btn btn-secondary btn-lg" id="limparFiltro">Limpar Filtro</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
-
 <!-- Exibir aviso de meses com limite atingido -->
 {% if meses_limite_atingido %}
     <div class="alert alert-warning mt-3">
@@ -241,7 +245,14 @@
                             <strong>{{ colaborador.nome }}</strong> - {{ colaborador.graduacao }}<br>
                             Número de RE: {{ colaborador.numero_re }}<br>
                             Data da Última Promoção: {{ colaborador.data_promocao|date:"d/m/Y" }}<br>
-                            Mês de Férias Alocado: {{ colaborador.mes_alocado }}
+                            Mês de Férias Alocado: {{ colaborador.mes_alocado }}<br>
+                            Tipo de Férias: {{ colaborador.tipo_ferias|title }}<br>
+                            {% if colaborador.quinzena1_mes and colaborador.quinzena1 %}
+    Quinzena 1: {{ colaborador.quinzena1_mes }} - {{ colaborador.quinzena1 }}<br>
+{% endif %}
+{% if colaborador.quinzena2_mes and colaborador.quinzena2 %}
+    Quinzena 2: {{ colaborador.quinzena2_mes }} - {{ colaborador.quinzena2 }}<br>
+{% endif %}
                         </li>
                     {% endfor %}
                     </ul>
