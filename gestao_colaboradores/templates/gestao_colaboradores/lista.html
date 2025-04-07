@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Colaboradores</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            padding: 15px;
+        }
+        h1 {
+            color: #003366;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 700;
+        }
+        .card {
+            margin-bottom: 20px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #003366;
+            color: white;
+            text-align: center;
+            font-weight: 700;
+        }
+        .btn-primary {
+            background-color: #003366;
+            border-color: #003366;
+        }
+        .btn-primary:hover {
+            background-color: #002244;
+            border-color: #002244;
+        }
+        .logo-container {
+            text-align: center;
+            margin-bottom: 10px;
+            max-width: 60%;
+        }
+        .logo {
+            max-width: 50%;
+            height: auto;
+        }
+        @media (min-width: 975px) {
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% load static %}
+        <div class="logo-container mx-auto">
+            <img src="{% static 'gestao_colaboradores\logo_policiamilitar.png' %}" alt="Logo Polícia Militar" class="logo">
+        </div>
+        <h1>Efetivo</h1>
+
+
+        <!-- Contador de Colaboradores -->
+        <div class="text-center mt-4">
+            <h2>Total: {{ colaboradores|length }}</h2>
+        </div>
+
+
+    <!-- Botões para Filtrar, Cadastrar Colaborador e Ver Alocações -->
+<div class="d-flex justify-content-center mt-4">
+    <button type="button" class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#filterModal">
+        Filtrar
+    </button>
+    <a href="{% url 'cadastrar_colaborador' %}" class="btn btn-primary me-3">Cadastrar</a>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#countsModal">
+        Ver Alocações
+    </button>
+</div>
+
+      <!-- Modal para Exibir as Alocações por Mês e Editar o Limite -->
+      <div class="modal fade" id="countsModal" tabindex="-1" aria-labelledby="countsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="countsModalLabel">Alocações por Mês</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Campo para editar o limite -->
+                        <div class="mb-3">
+                            {{ configuracao_form.limite_por_mes.label_tag }}
+                            {{ configuracao_form.limite_por_mes }}
+                        </div>
+                                        <!-- Adicionando o formulário para selecionar as férias -->
+                    
+
+                        <ul class="list-group">
+                            {% for mes, total in counts_per_month_list %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ mes }}
+                                    <span class="badge bg-primary rounded-pill">{{ total }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        {% if meses_limite_atingido %}
+                            <div class="alert alert-warning mt-3">
+                                <strong>Atenção:</strong> Os seguintes meses atingiram o limite de alocação:
+                                {% for mes in meses_limite_atingido %}
+                                    {{ mes }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" name="salvar_configuracao" class="btn btn-primary">Salvar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+        <div class="d-flex justify-content-end mt-4">
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    Exportar
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <a href="{% url 'exportar_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-secondary me-2">Exportar PDF</a>
+                    <a href="{% url 'exportar_csv' %}?{{ request.GET.urlencode }}" class="btn btn-secondary">Exportar CSV</a>
+                </ul>
+            </div>
+        </div>
+          <!-- Modal de Erros -->
+          <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                  <div class="modal-content">
+                      <div class="modal-header bg-danger text-white">
+                          <h5 class="modal-title" id="errorModalLabel">Atenção: Erros Encontrados</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                          {% if form.errors %}
+                              <ul class="list-group">
+                                  {% for field in form %}
+                                      {% for error in field.errors %}
+                                          <li class="list-group-item list-group-item-danger">{{ field.label }}: {{ error }}</li>
+                                      {% endfor %}
+                                  {% endfor %}
+                              </ul>
+                          {% endif %}
+                      </div>
+                      <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          {% if form.errors %}
+              <script>
+                  document.addEventListener('DOMContentLoaded', function() {
+                      var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+                      errorModal.show();
+                  });
+              </script>
+          {% endif %}
+
+
+<!-- Modal do Filtro -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">Filtrar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        Mês de Férias
+                        {{ filter.form.mes_alocado }}
+                    </div>
+
+                    <div class="col-md-3">
+                        {{ filter.form.graduacao.label_tag }}
+                        {{ filter.form.graduacao }}
+                    </div>
+                    <div class="col-md-2">
+                        Ferias
+                        {{ filter.form.tipo_ferias }}
+                    </div>
+
+                    <div class="col-md-6">
+                        {{ filter.form.numero_re.label_tag }}
+                        {{ filter.form.numero_re }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ filter.form.data_promocao.label_tag }}
+                        <input type="text" class="form-control datepicker" id="{{ filter.form.data_promocao.id_for_label }}" name="{{ filter.form.data_promocao.html_name }}" value="{{ filter.form.data_promocao.value|default_if_none:'' }}" data-provide="datepicker" data-date-format="dd/mm/yyyy">
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg me-2">Aplicar</button>
+                        <button type="button" class="btn btn-secondary btn-lg" id="limparFiltro">Limpar Filtro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Exibir aviso de meses com limite atingido -->
+{% if meses_limite_atingido %}
+    <div class="alert alert-warning mt-3">
+        <strong>Atenção:</strong> Os seguintes meses atingiram o limite de alocação:
+        {% for mes in meses_limite_atingido %}
+            {{ mes }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+        <!-- Lista de colaboradores filtrados -->
+        {% if colaboradores %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"></h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                    {% for colaborador in colaboradores %}
+                        <li class="list-group-item">
+                            <strong>{{ colaborador.nome }}</strong> - {{ colaborador.graduacao }}<br>
+                            Número de RE: {{ colaborador.numero_re }}<br>
+                            Data de Nascimento: {% if colaborador.data_nascimento %}{{ colaborador.data_nascimento|date:"d/m/Y" }}{% else %}-{% endif %}<br>
+                            Data da Última Promoção: {% if colaborador.data_ultima_promocao %}{{ colaborador.data_ultima_promocao|date:"d/m/Y" }}{% else %}-{% endif %}<br>
+                            Classificação no Último Concurso: {% if colaborador.classificacao_concurso %}{{ colaborador.classificacao_concurso }}{% else %}-{% endif %}<br>
+                            Data de Ingresso na PM: {% if colaborador.data_ingresso_pm %}{{ colaborador.data_ingresso_pm|date:"d/m/Y" }}{% else %}-{% endif %}<br>
+                            {% if colaborador.tipo_ferias == 'mensal' %}
+                                Mês de Férias Alocado: {% if colaborador.mes_alocado %}{{ colaborador.mes_alocado }} {% if colaborador.inicio_ferias_alocado %}(Dia {{ colaborador.inicio_ferias_alocado }}){% endif %}{% else %}-{% endif %}<br>
+                            {% else %}
+                                Férias Quinzenais:<br>
+                                {% if colaborador.quinzena1_alocada %}
+                                    &nbsp;&nbsp;1ª Quinzena: {{ colaborador.quinzena1_alocada }} {% if colaborador.inicio_quinzena1_alocado %}(Dia {{ colaborador.inicio_quinzena1_alocado }}){% endif %}<br>
+                                {% endif %}
+                                {% if colaborador.quinzena2_alocada %}
+                                    &nbsp;&nbsp;2ª Quinzena: {{ colaborador.quinzena2_alocada }} {% if colaborador.inicio_quinzena2_alocado %}(Dia {{ colaborador.inicio_quinzena2_alocado }}){% endif %}<br>
+                                {% endif %}
+                                {% if colaborador.quinzena3_alocada %}
+                                    &nbsp;&nbsp;3ª Quinzena: {{ colaborador.quinzena3_alocada }} {% if colaborador.inicio_quinzena3_alocado %}(Dia {{ colaborador.inicio_quinzena3_alocado }}){% endif %}<br>
+                                {% endif %}
+                            {% endif %}
+                            Tipo de Férias: {{ colaborador.tipo_ferias|title }}<br>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                Não há colaboradores cadastrados no momento.
+            </div>
+        {% endif %}
+    </div>
+
+  
+
+    <!-- Incluindo scripts do Bootstrap e Datepicker -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker/dist/locales/bootstrap-datepicker.pt-BR.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            $('.datepicker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                todayHighlight: true,
+                language: 'pt-BR'
+            });
+    
+            // Adiciona um evento de submit ao formulário
+            $('form').on('submit', function() {
+                // Obtém a data selecionada
+                var selectedDate = $('#id_data_ultima_promocao').val();
+                
+                // Verifica se uma data foi selecionada
+                if (selectedDate) {
+                    // Converte a data para o formato esperado pelo backend (se necessário)
+                    var formattedDate = selectedDate;  // Já está no formato correto (yyyy-mm-dd)
+                    
+                    // Atualiza o valor do campo de input
+                    $('#id_data_ultima_promocao').val(formattedDate);
+                }
+            });
+    
+            // Adiciona evento para limpar o filtro
+            $('#limparFiltro').on('click', function() {
+                // Redireciona para a mesma página sem parâmetros
+                window.location.href = window.location.pathname;
+            });
+        });
+    </script>
+</body>
+</html>

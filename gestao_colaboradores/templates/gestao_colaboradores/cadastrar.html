@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Colaborador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 400px;
+            padding: 15px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #003366;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 400;
+            font-size: 24px;
+        }
+        .card {
+            margin-bottom: 20px;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #003366;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        label {
+            font-weight: 400;
+            color: #003366;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-control {
+            font-size: 14px;
+            width: 100%;
+        }
+        .btn-primary {
+            background-color: #003366;
+            border-color: #003366;
+            font-size: 14px;
+            padding: 6px 12px;
+        }
+        .btn-primary:hover {
+            background-color: #002244;
+            border-color: #002244;
+        }
+        .logo-container {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .logo {
+            max-width: 70px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% load static %}
+        <div class="logo-container">
+            <img src="{% static 'gestao_colaboradores\logo_policiamilitar.png' %}" alt="Logo Polícia Militar" class="logo">
+        </div>
+        <h1>Cadastrar Policial</h1>
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Informações do Policial</h5>
+            </div>
+            <div class="card-body">
+                <!-- Exibir mensagens de erro -->
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>Por favor, corrija os erros abaixo:</strong>
+                    <ul>
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="id_nome">Nome:</label>
+                        <input type="text" id="id_nome" name="nome" class="form-control" value="{{ form.nome.value|default_if_none:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_graduacao">Graduação:</label>
+                        {{ form.graduacao }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_numero_re">Número de RE:</label>
+                        <input type="text" id="id_numero_re" name="numero_re" class="form-control" maxlength="6" pattern="\d{1,6}" title="Máximo 6 dígitos" value="{{ form.numero_re.value|default_if_none:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_data_nascimento">Data de Nascimento:</label>
+                        <input type="date" id="id_data_nascimento" name="data_nascimento" class="form-control" value="{{ form.data_nascimento.value|date:'Y-m-d' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_data_ultima_promocao">Data da Última Promoção:</label>
+                        <input type="date" id="id_data_ultima_promocao" name="data_ultima_promocao" class="form-control" value="{{ form.data_ultima_promocao.value|date:'Y-m-d' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_classificacao_concurso">Classificação no Último Concurso:</label>
+                        <input type="number" id="id_classificacao_concurso" name="classificacao_concurso" class="form-control" value="{{ form.classificacao_concurso.value|default_if_none:'' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_data_ingresso_pm">Data de Ingresso na PM:</label>
+                        <input type="date" id="id_data_ingresso_pm" name="data_ingresso_pm" class="form-control" value="{{ form.data_ingresso_pm.value|date:'Y-m-d' }}">
+                    </div>
+
+                    <!-- Nova secção de opções de férias com flexibilidade -->
+                    <div class="form-group">
+                        <h4 class="mt-4 mb-3 text-center">Opções de Férias</h4>
+                        <p class="text-muted text-center">Você pode escolher até 3 opções, cada uma podendo ser mensal ou quinzenal</p>
+                    </div>
+
+                    <!-- Primeira opção -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">1ª Opção de Férias</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group row mb-3">
+                                <label for="id_opcao1_tipo" class="col-md-3 col-form-label">Tipo:</label>
+                                <div class="col-md-9">
+                                    <select id="id_opcao1_tipo" name="opcao1_tipo" class="form-control" onchange="toggleOpcaoTipo(1, this.value)">
+                                        <option value="">Selecione...</option>
+                                        <option value="mensal" {% if form.opcao1_tipo.value == 'mensal' %}selected{% endif %}>Mensal</option>
+                                        <option value="quinzenal" {% if form.opcao1_tipo.value == 'quinzenal' %}selected{% endif %}>Quinzenal</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Container para opção mensal -->
+                            <div id="opcao1_mensal" class="opcao-container" style="display: none;">
+                                <div class="form-group row mb-3">
+                                    <label for="id_opcao1_mes" class="col-md-3 col-form-label">Mês:</label>
+                                    <div class="col-md-9">
+                                        <select id="id_opcao1_mes_mensal" name="opcao1_mes_mensal" class="form-control" onchange="syncField('opcao1_mes', this.value)">
+                                            <option value="">Selecione...</option>
+                                            {% for mes in form.fields.opcao1_mes.widget.choices %}
+                                                {% if mes.0 %}
+                                                    <option value="{{ mes.0 }}" {% if form.opcao1_mes.value == mes.0 %}selected{% endif %}>{{ mes.1 }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                        <input type="hidden" id="id_opcao1_mes" name="opcao1_mes" value="{{ form.opcao1_mes.value|default:'' }}">
+                                    </div>
+                                </div>
+                                <div class="form-group row mb-3">
+                                    <label for="id_opcao1_inicio_mensal" class="col-md-3 col-form-label">Dia de Início:</label>
+                                    <div class="col-md-9">
+                                        <select id="id_opcao1_inicio_mensal" name="opcao1_inicio_mensal" class="form-control" onchange="syncField('opcao1_inicio', this.value)">
+                                            <option value="">Selecione...</option>
+                                            <option value="1" {% if form.opcao1_inicio.value == '1' %}selected{% endif %}>Dia 1</option>
+                                            <option value="15" {% if form.opcao1_inicio.value == '15' %}selected{% endif %}>Dia 15</option>
+                                        </select>
+                                        <input type="hidden" id="id_opcao1_inicio" name="opcao1_inicio" value="{{ form.opcao1_inicio.value|default:'' }}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Container para opção quinzenal -->
+                            <div id="opcao1_quinzenal" class="opcao-container" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="border p-3 mb-3">
+                                            <h6 class="text-center mb-3">Primeira Quinzena</h6>
+                                            <div class="form-group mb-3">
+                                                <label for="id_opcao1_mes_quinzena1">Mês:</label>
+                                                <select id="id_opcao1_mes_quinzena1" name="opcao1_mes_quinzena1" class="form-control" onchange="syncField('opcao1_mes', this.value); validateQuinzenaOptions(1)">
+                                                    <option value="">Selecione...</option>
+                                                    {% for mes in form.fields.opcao1_mes.widget.choices %}
+                                                        {% if mes.0 %}
+                                                            <option value="{{ mes.0 }}" {% if form.opcao1_mes.value == mes.0 %}selected{% endif %}>{{ mes.1 }}</option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="id_opcao1_inicio_quinzena1">Dia de Início:</label>
+                                                <select id="id_opcao1_inicio_quinzena1" name="opcao1_inicio_quinzena1" class="form-control" onchange="syncField('opcao1_inicio', this.value); validateQuinzenaOptions(1)">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="1" {% if form.opcao1_inicio.value == '1' %}selected{% endif %}>Dia 1</option>
+                                                    <option value="15" {% if form.opcao1_inicio.value == '15' %}selected{% endif %}>Dia 15</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="border p-3 mb-3">
+                                            <h6 class="text-center mb-3">Segunda Quinzena</h6>
+                                            <div class="form-group mb-3">
+                                                <label for="id_opcao1_mes_quinzena2">Mês:</label>
+                                                <select id="id_opcao1_mes_quinzena2" class="form-control" onchange="validateQuinzenaOptions(1)">
+                                                    <option value="">Selecione...</option>
+                                                    {% for mes in form.fields.opcao1_mes.widget.choices %}
+                                                        {% if mes.0 %}
+                                                            <option value="{{ mes.0 }}">{{ mes.1 }}</option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="id_opcao1_inicio_quinzena2">Dia de Início:</label>
+                                                <select id="id_opcao1_inicio_quinzena2" class="form-control" onchange="validateQuinzenaOptions(1)">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="1">Dia 1</option>
+                                                    <option value="15">Dia 15</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Segunda opção -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">2ª Opção de Férias</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group row mb-3">
+                                <label for="id_opcao2_tipo" class="col-md-3 col-form-label">Tipo:</label>
+                                <div class="col-md-9">
+                                    <select id="id_opcao2_tipo" name="opcao2_tipo" class="form-control" onchange="toggleOpcaoTipo(2, this.value)">
+                                        <option value="">Selecione...</option>
+                                        <option value="mensal" {% if form.opcao2_tipo.value == 'mensal' %}selected{% endif %}>Mensal</option>
+                                        <option value="quinzenal" {% if form.opcao2_tipo.value == 'quinzenal' %}selected{% endif %}>Quinzenal</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Container para opção mensal -->
+                            <div id="opcao2_mensal" class="opcao-container" style="display: none;">
+                                <div class="form-group row mb-3">
+                                    <label for="id_opcao2_mes_mensal" class="col-md-3 col-form-label">Mês:</label>
+                                    <div class="col-md-9">
+                                        <select id="id_opcao2_mes_mensal" name="opcao2_mes_mensal" class="form-control" onchange="syncField('opcao2_mes', this.value)">
+                                            <option value="">Selecione...</option>
+                                            {% for mes in form.fields.opcao2_mes.widget.choices %}
+                                                {% if mes.0 %}
+                                                    <option value="{{ mes.0 }}" {% if form.opcao2_mes.value == mes.0 %}selected{% endif %}>{{ mes.1 }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                        <input type="hidden" id="id_opcao2_mes" name="opcao2_mes" value="{{ form.opcao2_mes.value|default:'' }}">
+                                    </div>
+                                </div>
+                                <div class="form-group row mb-3">
+                                    <label for="id_opcao2_inicio_mensal" class="col-md-3 col-form-label">Dia de Início:</label>
+                                    <div class="col-md-9">
+                                        <select id="id_opcao2_inicio_mensal" name="opcao2_inicio_mensal" class="form-control" onchange="syncField('opcao2_inicio', this.value)">
+                                            <option value="">Selecione...</option>
+                                            <option value="1" {% if form.opcao2_inicio.value == '1' %}selected{% endif %}>Dia 1</option>
+                                            <option value="15" {% if form.opcao2_inicio.value == '15' %}selected{% endif %}>Dia 15</option>
+                                        </select>
+                                        <input type="hidden" id="id_opcao2_inicio" name="opcao2_inicio" value="{{ form.opcao2_inicio.value|default:'' }}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Container para opção quinzenal -->
+                            <div id="opcao2_quinzenal" class="opcao-container" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="border p-3 mb-3">
+                                            <h6 class="text-center mb-3">Primeira Quinzena</h6>
+                                            <div class="form-group mb-3">
+                                                <label for="id_opcao2_mes_quinzena1">Mês:</label>
+                                                <select id="id_opcao2_mes_quinzena1" name="opcao2_mes_quinzena1" class="form-control" onchange="syncField('opcao2_mes', this.value); validateQuinzenaOptions(2)">
+                                                    <option value="">Selecione...</option>
+                                                    {% for mes in form.fields.opcao2_mes.widget.choices %}
+                                                        {% if mes.0 %}
+                                                            <option value="{{ mes.0 }}" {% if form.opcao2_mes.value == mes.0 %}selected{% endif %}>{{ mes.1 }}</option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="id_opcao2_inicio_quinzena1">Dia de Início:</label>
+                                                <select id="id_opcao2_inicio_quinzena1" name="opcao2_inicio_quinzena1" class="form-control" onchange="syncField('opcao2_inicio', this.value); validateQuinzenaOptions(2)">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="1" {% if form.opcao2_inicio.value == '1' %}selected{% endif %}>Dia 1</option>
+                                                    <option value="15" {% if form.opcao2_inicio.value == '15' %}selected{% endif %}>Dia 15</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="border p-3 mb-3">
+                                            <h6 class="text-center mb-3">Segunda Quinzena</h6>
+                                            <div class="form-group mb-3">
+                                                <label for="id_opcao2_mes_quinzena2">Mês:</label>
+                                                <select id="id_opcao2_mes_quinzena2" class="form-control" onchange="validateQuinzenaOptions(2)">
+                                                    <option value="">Selecione...</option>
+                                                    {% for mes in form.fields.opcao2_mes.widget.choices %}
+                                                        {% if mes.0 %}
+                                                            <option value="{{ mes.0 }}">{{ mes.1 }}</option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="id_opcao2_inicio_quinzena2">Dia de Início:</label>
+                                                <select id="id_opcao2_inicio_quinzena2" class="form-control" onchange="validateQuinzenaOptions(2)">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="1">Dia 1</option>
+                                                    <option value="15">Dia 15</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terceira opção -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">3ª Opção de Férias</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group row mb-3">
+                                <label for="id_opcao3_tipo" class="col-md-3 col-form-label">Tipo:</label>
+                                <div class="col-md-9">
+                                    <select id="id_opcao3_tipo" name="opcao3_tipo" class="form-control" onchange="toggleOpcaoTipo(3, this.value)">
+                                        <option value="">Selecione...</option>
+                                        <option value="mensal" {% if form.opcao3_tipo.value == 'mensal' %}selected{% endif %}>Mensal</option>
+                                        <option value="quinzenal" {% if form.opcao3_tipo.value == 'quinzenal' %}selected{% endif %}>Quinzenal</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Container para opção mensal -->
+                            <div id="opcao3_mensal" class="opcao-container" style="display: none;">
+                                <div class="form-group row mb-3">
+                                    <label for="id_opcao3_mes_mensal" class="col-md-3 col-form-label">Mês:</label>
+                                    <div class="col-md-9">
+                                        <select id="id_opcao3_mes_mensal" name="opcao3_mes_mensal" class="form-control" onchange="syncField('opcao3_mes', this.value)">
+                                            <option value="">Selecione...</option>
+                                            {% for mes in form.fields.opcao3_mes.widget.choices %}
+                                                {% if mes.0 %}
+                                                    <option value="{{ mes.0 }}" {% if form.opcao3_mes.value == mes.0 %}selected{% endif %}>{{ mes.1 }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                        <input type="hidden" id="id_opcao3_mes" name="opcao3_mes" value="{{ form.opcao3_mes.value|default:'' }}">
+                                    </div>
+                                </div>
+                                <div class="form-group row mb-3">
+                                    <label for="id_opcao3_inicio_mensal" class="col-md-3 col-form-label">Dia de Início:</label>
+                                    <div class="col-md-9">
+                                        <select id="id_opcao3_inicio_mensal" name="opcao3_inicio_mensal" class="form-control" onchange="syncField('opcao3_inicio', this.value)">
+                                            <option value="">Selecione...</option>
+                                            <option value="1" {% if form.opcao3_inicio.value == '1' %}selected{% endif %}>Dia 1</option>
+                                            <option value="15" {% if form.opcao3_inicio.value == '15' %}selected{% endif %}>Dia 15</option>
+                                        </select>
+                                        <input type="hidden" id="id_opcao3_inicio" name="opcao3_inicio" value="{{ form.opcao3_inicio.value|default:'' }}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Container para opção quinzenal -->
+                            <div id="opcao3_quinzenal" class="opcao-container" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="border p-3 mb-3">
+                                            <h6 class="text-center mb-3">Primeira Quinzena</h6>
+                                            <div class="form-group mb-3">
+                                                <label for="id_opcao3_mes_quinzena1">Mês:</label>
+                                                <select id="id_opcao3_mes_quinzena1" name="opcao3_mes_quinzena1" class="form-control" onchange="syncField('opcao3_mes', this.value); validateQuinzenaOptions(3)">
+                                                    <option value="">Selecione...</option>
+                                                    {% for mes in form.fields.opcao3_mes.widget.choices %}
+                                                        {% if mes.0 %}
+                                                            <option value="{{ mes.0 }}" {% if form.opcao3_mes.value == mes.0 %}selected{% endif %}>{{ mes.1 }}</option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="id_opcao3_inicio_quinzena1">Dia de Início:</label>
+                                                <select id="id_opcao3_inicio_quinzena1" name="opcao3_inicio_quinzena1" class="form-control" onchange="syncField('opcao3_inicio', this.value); validateQuinzenaOptions(3)">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="1" {% if form.opcao3_inicio.value == '1' %}selected{% endif %}>Dia 1</option>
+                                                    <option value="15" {% if form.opcao3_inicio.value == '15' %}selected{% endif %}>Dia 15</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="border p-3 mb-3">
+                                            <h6 class="text-center mb-3">Segunda Quinzena</h6>
+                                            <div class="form-group mb-3">
+                                                <label for="id_opcao3_mes_quinzena2">Mês:</label>
+                                                <select id="id_opcao3_mes_quinzena2" class="form-control" onchange="validateQuinzenaOptions(3)">
+                                                    <option value="">Selecione...</option>
+                                                    {% for mes in form.fields.opcao3_mes.widget.choices %}
+                                                        {% if mes.0 %}
+                                                            <option value="{{ mes.0 }}">{{ mes.1 }}</option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="id_opcao3_inicio_quinzena2">Dia de Início:</label>
+                                                <select id="id_opcao3_inicio_quinzena2" class="form-control" onchange="validateQuinzenaOptions(3)">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="1">Dia 1</option>
+                                                    <option value="15">Dia 15</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group text-center">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        <a href="{% url 'lista_colaboradores' %}" class="btn btn-primary">Voltar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para mensagens de erro -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="errorModalLabel">Erro de Validação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="errorModalBody">
+                    <!-- Mensagem de erro será inserida aqui via JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Função para inicializar os campos quando a página carrega
+        function onload() {
+            // Inicializar campos para todas as opções
+            for (let i = 1; i <= 3; i++) {
+                const tipoSelect = document.getElementById(`id_opcao${i}_tipo`);
+                
+                if (tipoSelect && tipoSelect.value) {
+                    // Atualizar UI com base no tipo selecionado
+                    toggleOpcaoTipo(i, tipoSelect.value);
+                }
+            }
+            
+            // Configurar listeners para os campos de quinzena
+            setupQuinzenaEventListeners();
+            
+            // Configurar listeners para os campos de mensal
+            setupMensalEventListeners();
+            
+            // Adicionar evento para preparar dados antes do submit
+            document.querySelector('form').addEventListener('submit', prepareFormDataForSubmit);
+        }
+
+        // Executar após o carregamento da página
+        document.addEventListener('DOMContentLoaded', function() {
+            onload();
+        });
+
+        // Inicializar a exibição dos campos dependendo do valor inicial
+        // window.onload = function() {
+        //     for (let i = 1; i <= 3; i++) {
+        //         const tipoSelect = document.getElementById(`id_opcao${i}_tipo`);
+        //         if (tipoSelect) {
+        //             toggleOpcaoTipo(i, tipoSelect.value);
+            
+        //             // Configurar listeners para os campos de quinzena
+        //             setupQuinzenaEventListeners();
+            
+        //             // Configurar listeners para os campos de mensal
+        //             setupMensalEventListeners();
+            
+        //             // Adicionar evento para preparar dados antes do submit
+        //             document.querySelector('form').addEventListener('submit', prepareFormDataForSubmit);
+        // };
+        
+        // Função para configurar event listeners para os campos mensais
+        function setupMensalEventListeners() {
+            for (let i = 1; i <= 3; i++) {
+                // Adicionar listener para select de dia de início mensal
+                const inicioMensalSelect = document.getElementById(`id_opcao${i}_inicio_mensal`);
+                if (inicioMensalSelect) {
+                    inicioMensalSelect.addEventListener('change', function() {
+                        // Sincronizar com o campo de submit real
+                        const mainInicioSelect = document.getElementById(`id_opcao${i}_inicio`);
+                        mainInicioSelect.value = this.value;
+                    });
+                }
+            }
+        }
+        
+        // Função para exibir/ocultar campos com base no tipo selecionado
+        function toggleOpcaoTipo(numeroOpcao, tipo) {
+            const mensalContainer = document.getElementById(`opcao${numeroOpcao}_mensal`);
+            const quinzenalContainer = document.getElementById(`opcao${numeroOpcao}_quinzenal`);
+            const opcaoTipo = document.getElementById(`id_opcao${numeroOpcao}_tipo`);
+            const opcaoMes = document.getElementById(`id_opcao${numeroOpcao}_mes`);
+            const opcaoInicio = document.getElementById(`id_opcao${numeroOpcao}_inicio`);
+            
+            // Resetar os campos ocultos se nenhum tipo estiver selecionado
+            if (!tipo || tipo === '') {
+                if (opcaoMes) opcaoMes.value = '';
+                if (opcaoInicio) opcaoInicio.value = '';
+                mensalContainer.style.display = 'none';
+                quinzenalContainer.style.display = 'none';
+                return;
+            }
+            
+            if (tipo === 'mensal') {
+                mensalContainer.style.display = 'block';
+                quinzenalContainer.style.display = 'none';
+                
+                // Sincronizar campos para opção mensal
+                const mesMensal = document.getElementById(`id_opcao${numeroOpcao}_mes_mensal`);
+                const inicioMensal = document.getElementById(`id_opcao${numeroOpcao}_inicio_mensal`);
+                
+                if (mesMensal && opcaoMes) opcaoMes.value = mesMensal.value;
+                if (inicioMensal && opcaoInicio) opcaoInicio.value = inicioMensal.value;
+            } else if (tipo === 'quinzenal') {
+                mensalContainer.style.display = 'none';
+                quinzenalContainer.style.display = 'block';
+                
+                // Sincronizar campos para opção quinzenal
+                const mesQuinzena1 = document.getElementById(`id_opcao${numeroOpcao}_mes_quinzena1`);
+                const inicioQuinzena1 = document.getElementById(`id_opcao${numeroOpcao}_inicio_quinzena1`);
+                
+                if (mesQuinzena1 && opcaoMes) opcaoMes.value = mesQuinzena1.value;
+                if (inicioQuinzena1 && opcaoInicio) opcaoInicio.value = inicioQuinzena1.value;
+            } else {
+                mensalContainer.style.display = 'none';
+                quinzenalContainer.style.display = 'none';
+            }
+        }
+
+        // Configurar event listeners para os campos de quinzena
+        function setupQuinzenaEventListeners() {
+            for (let i = 1; i <= 3; i++) {
+                // Adicionar listener para select de meses da 1ª quinzena
+                const mesQuinzena1Select = document.getElementById(`id_opcao${i}_mes_quinzena1`);
+                if (mesQuinzena1Select) {
+                    mesQuinzena1Select.addEventListener('change', function() {
+                        // Sincronizar com o campo de submit real
+                        const mainMesSelect = document.getElementById(`id_opcao${i}_mes`);
+                        mainMesSelect.value = this.value;
+                        
+                        // Validar para evitar opções duplicadas
+                        validateQuinzenaOptions(i);
+                    });
+                }
+
+                // Adicionar listener para select de início da 1ª quinzena
+                const inicioQuinzena1Select = document.getElementById(`id_opcao${i}_inicio_quinzena1`);
+                if (inicioQuinzena1Select) {
+                    inicioQuinzena1Select.addEventListener('change', function() {
+                        // Sincronizar com o campo de submit real
+                        const mainInicioSelect = document.getElementById(`id_opcao${i}_inicio`);
+                        mainInicioSelect.value = this.value;
+                        
+                        // Validar para evitar opções duplicadas
+                        validateQuinzenaOptions(i);
+                    });
+                }
+                
+                // Adicionar listeners para a 2ª quinzena também
+                const mesQuinzena2Select = document.getElementById(`id_opcao${i}_mes_quinzena2`);
+                if (mesQuinzena2Select) {
+                    mesQuinzena2Select.addEventListener('change', function() {
+                        validateQuinzenaOptions(i);
+                    });
+                }
+                
+                const inicioQuinzena2Select = document.getElementById(`id_opcao${i}_inicio_quinzena2`);
+                if (inicioQuinzena2Select) {
+                    inicioQuinzena2Select.addEventListener('change', function() {
+                        validateQuinzenaOptions(i);
+                    });
+                }
+            }
+        }
+        
+        // Validar que não existem quinzenas duplicadas (mesmo mês com mesmo dia de início)
+        function validateQuinzenaOptions(opcaoNumero) {
+            const mesQuinzena1 = document.getElementById(`id_opcao${opcaoNumero}_mes_quinzena1`).value;
+            const inicioQuinzena1 = document.getElementById(`id_opcao${opcaoNumero}_inicio_quinzena1`).value;
+            const mesQuinzena2 = document.getElementById(`id_opcao${opcaoNumero}_mes_quinzena2`).value;
+            const inicioQuinzena2 = document.getElementById(`id_opcao${opcaoNumero}_inicio_quinzena2`).value;
+            
+            // Verificar se ambos os lados estão preenchidos
+            if (mesQuinzena1 && inicioQuinzena1 && mesQuinzena2 && inicioQuinzena2) {
+                // Verificar se meses e dia de início são idênticos
+                if (mesQuinzena1 === mesQuinzena2 && inicioQuinzena1 === inicioQuinzena2) {
+                    // Mostrar modal com a mensagem de erro em vez de usar alert
+                    showErrorModal(`Erro na Opção ${opcaoNumero}: Não pode selecionar o mesmo mês com o mesmo dia de início para ambas quinzenas.`);
+                    
+                    // Limpar o segundo campo para evitar duplicatas
+                    document.getElementById(`id_opcao${opcaoNumero}_mes_quinzena2`).value = "";
+                    document.getElementById(`id_opcao${opcaoNumero}_inicio_quinzena2`).value = "";
+                }
+            }
+        }
+
+        // Função para mostrar o modal de erro
+        function showErrorModal(message) {
+            const errorModalBody = document.getElementById('errorModalBody');
+            errorModalBody.textContent = message;
+            
+            // Usar o Bootstrap para abrir o modal
+            const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            errorModal.show();
+        }
+
+        // Preparar dados do form bi-semanal para submissão
+        function prepareFormDataForSubmit(event) {
+            let hasErrors = false;
+            let errorMessage = '';
+            
+            // Processar os dados antes do submit
+            for (let i = 1; i <= 3; i++) {
+                const tipoSelect = document.getElementById(`id_opcao${i}_tipo`);
+                
+                if (tipoSelect && tipoSelect.value === 'quinzenal') {
+                    // Validar novamente antes do submit
+                    const mesQuinzena1 = document.getElementById(`id_opcao${i}_mes_quinzena1`).value;
+                    const inicioQuinzena1 = document.getElementById(`id_opcao${i}_inicio_quinzena1`).value;
+                    const mesQuinzena2 = document.getElementById(`id_opcao${i}_mes_quinzena2`).value;
+                    const inicioQuinzena2 = document.getElementById(`id_opcao${i}_inicio_quinzena2`).value;
+                    
+                    // Verificar duplicatas
+                    if (mesQuinzena1 && inicioQuinzena1 && mesQuinzena2 && inicioQuinzena2) {
+                        if (mesQuinzena1 === mesQuinzena2 && inicioQuinzena1 === inicioQuinzena2) {
+                            errorMessage = `Erro na Opção ${i}: Não pode selecionar o mesmo mês com o mesmo dia de início para ambas quinzenas.`;
+                            hasErrors = true;
+                            break;
+                        }
+                    }
+                    
+                    // Atualizar os campos principais que serão submetidos
+                    document.getElementById(`id_opcao${i}_mes`).value = mesQuinzena1;
+                    document.getElementById(`id_opcao${i}_inicio`).value = inicioQuinzena1;
+                    
+                    // Armazenar informações da segunda quinzena em um campo hidden ou via JavaScript
+                    console.log(`Opção ${i} - 2ª Quinzena: Mês ${mesQuinzena2}, Início ${inicioQuinzena2}`);
+                } else if (tipoSelect && tipoSelect.value === 'mensal') {
+                    // Para opções mensais, certificar que os valores estão nos campos corretos
+                    const inicioMensal = document.getElementById(`id_opcao${i}_inicio_mensal`).value;
+                    document.getElementById(`id_opcao${i}_inicio`).value = inicioMensal;
+                }
+            }
+            
+            // Se houver erros, impedir o submit do form e mostrar o modal
+            if (hasErrors) {
+                event.preventDefault();
+                showErrorModal(errorMessage);
+                return false;
+            }
+        }
+        
+        // Função para sincronizar campos
+        function syncField(fieldName, value) {
+            const mainField = document.getElementById(`id_${fieldName}`);
+            if (mainField) {
+                mainField.value = value;
+            }
+        }
+    </script>
+</body>
+</html>
